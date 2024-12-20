@@ -1,7 +1,7 @@
-package main
+package table
 
-func bot_move(table *Table) bool {
-	for _, c := range table.Cells {
+func BotMove(t *Table) bool {
+	for _, c := range t.Cells {
 		if c.Value == EmptyCell {
 			c.Value = BotCell
 			return true

@@ -1,4 +1,4 @@
-package main
+package constants
 
 const CubeSize = 32
 const CubePadding = 4
