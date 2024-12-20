@@ -12,8 +12,7 @@ import (
 
 type Game struct {
 	Table        *Table
-	CursorX      int
-	CursorY      int
+	Cursor       int
 	IsPlayerTurn bool
 	CloseGame    bool
 }
@@ -25,42 +24,35 @@ func (g *Game) Update() error {
 		return CloseGameError
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyD) {
-		g.CursorX += 1
+		g.Cursor += 1
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyA) {
-		g.CursorX -= 1
+		g.Cursor -= 1
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyS) {
-		g.CursorY += 1
+		g.Cursor += TableSize
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyW) {
-		g.CursorY -= 1
+		g.Cursor -= TableSize
 	}
 
-	if g.CursorX > TableSize-1 {
-		g.CursorX = 0
+	if g.Cursor > len(g.Table.Cells)-1 {
+		g.Cursor = 0
 	}
-	if g.CursorX < 0 {
-		g.CursorX = TableSize - 1
-	}
-
-	if g.CursorY > TableSize-1 {
-		g.CursorY = 0
-	}
-	if g.CursorY < 0 {
-		g.CursorY = TableSize - 1
+	if g.Cursor < 0 {
+		g.Cursor = TableSize - 1
 	}
 	newMove := false
 	if g.IsPlayerTurn == false {
 		g.IsPlayerTurn = bot_move(g.Table)
 		newMove = true
 	}
-
-	if inpututil.IsKeyJustPressed(ebiten.KeySpace) && g.IsPlayerTurn && g.Table.Cells[g.CursorY][g.CursorX].Value == EmptyCell {
+	if inpututil.IsKeyJustPressed(ebiten.KeySpace) && g.IsPlayerTurn && g.Table.Cells[g.Cursor].Value == EmptyCell {
 		g.IsPlayerTurn = false
-		g.Table.Cells[g.CursorY][g.CursorX].Value = PlayerCell
+		g.Table.Cells[g.Cursor].Value = PlayerCell
 		newMove = true
 	}
+	_ = newMove
 
 	if newMove {
 		who, isWon := g.Table.checkWin()
@@ -83,14 +75,14 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	txt := fmt.Sprintf("%.1f\nuse WASD to move cursor\nSpace to fill Cells", ebiten.ActualTPS())
 	ebitenutil.DebugPrint(screen, txt)
 
-	for indexY, RowCells := range g.Table.Cells {
-		for indexX, c := range RowCells {
-			ishoverd := false
-			if g.CursorX == indexX && g.CursorY == indexY {
-				ishoverd = true
-			}
-			DrawCell(screen, indexX, indexY, c.Value, ishoverd)
+	for ind, c := range g.Table.Cells {
+		ishoverd := false
+		if g.Cursor == ind {
+			ishoverd = true
 		}
+		xin, yin := g.Table.IndexToCord(ind)
+		DrawCell(screen, xin, yin, c.Value, ishoverd)
+
 	}
 }
 
@@ -103,8 +95,7 @@ func main() {
 	ebiten.SetWindowTitle("Hello, World!")
 	g := &Game{}
 	g.Table = NewTable(TableSize)
-	g.CursorX = 0
-	g.CursorY = 0
+	g.Cursor = 0
 	g.IsPlayerTurn = true
 	if err := ebiten.RunGame(g); err != nil {
 		log.Fatal(err)

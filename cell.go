@@ -52,37 +52,63 @@ func DrawCell(screen *ebiten.Image, indexX, indexY int, value int, ishoverd bool
 }
 
 type Table struct {
-	Cells [][]*Cell
+	Cells []*Cell
+}
+
+func (t *Table) CordToIndex(xIndex, yIndex int) int {
+	return yIndex*TableSize + xIndex
+}
+func (t *Table) IndexToCord(index int) (xIndex, yIndex int) {
+	xIndex = index % TableSize
+	yIndex = index / TableSize
+	return xIndex, yIndex
 }
 
 func NewTable(tableSize int) *Table {
 	table := &Table{}
 	for range tableSize {
-		rowCell := []*Cell{}
 		for range tableSize {
-			rowCell = append(rowCell, &Cell{Value: EmptyCell})
+			table.Cells = append(table.Cells, &Cell{Value: EmptyCell})
 		}
-		table.Cells = append(table.Cells, rowCell)
 	}
 	return table
 }
-func isAllSame(vals []*Cell) bool {
-	last := vals[0].Value
+func isAllSame(vals []int) bool {
+	last := vals[0]
 	if last == EmptyCell {
 		return false
 	}
 	for _, v := range vals {
-		if v.Value != last {
+		if v != last {
 			return false
 		}
 	}
 	return true
 }
+
+// hardcoded only for 3*3
 func (t *Table) checkWin() (int, bool) {
-	for _, cellRow := range t.Cells {
-		if isAllSame(cellRow) {
-			return cellRow[0].Value, true
+	possibles := [][]int{
+		[]int{0, 1, 2},
+		[]int{3, 4, 5},
+		[]int{6, 7, 8},
+
+		[]int{0, 3, 6},
+		[]int{1, 4, 7},
+		[]int{2, 5, 8},
+
+		[]int{0, 4, 8},
+		[]int{2, 4, 6},
+	}
+	for _, pos := range possibles {
+		items := []int{}
+		for _, ci := range pos {
+			items = append(items, t.Cells[ci].Value)
+		}
+		if isAllSame(items) {
+			return items[0], true
 		}
 	}
+
 	return 0, false
 }
