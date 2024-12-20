@@ -66,3 +66,23 @@ func NewTable(tableSize int) *Table {
 	}
 	return table
 }
+func isAllSame(vals []*Cell) bool {
+	last := vals[0].Value
+	if last == EmptyCell {
+		return false
+	}
+	for _, v := range vals {
+		if v.Value != last {
+			return false
+		}
+	}
+	return true
+}
+func (t *Table) checkWin() (int, bool) {
+	for _, cellRow := range t.Cells {
+		if isAllSame(cellRow) {
+			return cellRow[0].Value, true
+		}
+	}
+	return 0, false
+}

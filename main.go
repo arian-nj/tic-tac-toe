@@ -15,11 +15,14 @@ type Game struct {
 	CursorX      int
 	CursorY      int
 	IsPlayerTurn bool
+	CloseGame    bool
 }
+
+var CloseGameError = fmt.Errorf("game closed")
 
 func (g *Game) Update() error {
 	if ebiten.IsKeyPressed(ebiten.KeyQ) {
-		return fmt.Errorf("game closed")
+		return CloseGameError
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyD) {
 		g.CursorX += 1
@@ -47,19 +50,38 @@ func (g *Game) Update() error {
 	if g.CursorY < 0 {
 		g.CursorY = TableSize - 1
 	}
+	newMove := false
+	if g.IsPlayerTurn == false {
+		g.IsPlayerTurn = bot_move(g.Table)
+		newMove = true
+	}
+
 	if inpututil.IsKeyJustPressed(ebiten.KeySpace) && g.IsPlayerTurn && g.Table.Cells[g.CursorY][g.CursorX].Value == EmptyCell {
 		g.IsPlayerTurn = false
 		g.Table.Cells[g.CursorY][g.CursorX].Value = PlayerCell
+		newMove = true
 	}
-	if g.IsPlayerTurn == false {
-		g.IsPlayerTurn = bot_move(g.Table)
+
+	if newMove {
+		who, isWon := g.Table.checkWin()
+		if isWon {
+			winner := "no one"
+			if who == PlayerCell {
+				winner = "player"
+			} else {
+				winner = "bot"
+			}
+			fmt.Println("winner is ", winner)
+			return CloseGameError
+		}
 	}
 	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(color.RGBA{100, 160, 255, 255})
-	ebitenutil.DebugPrint(screen, fmt.Sprintf("%.1f", ebiten.ActualTPS()))
+	txt := fmt.Sprintf("%.1f\nuse WASD to move cursor\nSpace to fill Cells", ebiten.ActualTPS())
+	ebitenutil.DebugPrint(screen, txt)
 
 	for indexY, RowCells := range g.Table.Cells {
 		for indexX, c := range RowCells {
