@@ -8,16 +8,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
-	"github.com/hajimehoshi/ebiten/v2/vector"
 )
-
-type Cell struct {
-	Value int
-}
-
-type Table struct {
-	Cells [][]Cell
-}
 
 type Game struct {
 	Table        *Table
@@ -56,9 +47,12 @@ func (g *Game) Update() error {
 	if g.CursorY < 0 {
 		g.CursorY = TableSize - 1
 	}
-	if inpututil.IsKeyJustPressed(ebiten.KeySpace) && g.IsPlayerTurn {
+	if inpututil.IsKeyJustPressed(ebiten.KeySpace) && g.IsPlayerTurn && g.Table.Cells[g.CursorY][g.CursorX].Value == EmptyCell {
 		g.IsPlayerTurn = false
-
+		g.Table.Cells[g.CursorY][g.CursorX].Value = PlayerCell
+	}
+	if g.IsPlayerTurn == false {
+		g.IsPlayerTurn = bot_move(g.Table)
 	}
 	return nil
 }
@@ -68,35 +62,18 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	ebitenutil.DebugPrint(screen, fmt.Sprintf("%.1f", ebiten.ActualTPS()))
 
 	for indexY, RowCells := range g.Table.Cells {
-		for indexX, _ := range RowCells {
-			var col color.Color = color.Black
-			if g.IsPlayerTurn {
-				if g.CursorX == indexX && g.CursorY == indexY {
-					col = color.RGBA{255, 255, 255, 1}
-				}
+		for indexX, c := range RowCells {
+			ishoverd := false
+			if g.CursorX == indexX && g.CursorY == indexY {
+				ishoverd = true
 			}
-
-			vector.StrokeRect(screen,
-				float32((indexX*(CubeSize+CubePadding))+TableStartX), float32((indexY*(CubeSize+CubePadding))+TableStartY),
-				CubeSize, CubeSize, CubeBorderSize,
-				col, true)
+			DrawCell(screen, indexX, indexY, c.Value, ishoverd)
 		}
 	}
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
 	return 320, 240
-}
-func NewTable(tableSize int) *Table {
-	table := &Table{}
-	for range tableSize {
-		rowCell := []Cell{}
-		for range tableSize {
-			rowCell = append(rowCell, Cell{Value: 0})
-		}
-		table.Cells = append(table.Cells, rowCell)
-	}
-	return table
 }
 
 func main() {
